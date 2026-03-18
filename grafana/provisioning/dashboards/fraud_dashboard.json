@@ -11,8 +11,9 @@
       "type": "stat",
       "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
       "targets": [{
-        "rawSql": "SELECT count() FROM fraud_predictions",
-        "format": "table"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT count() FROM fraud_detection.transactions",
+        "format": 1
       }],
       "options": { "colorMode": "background" }
     },
@@ -22,8 +23,9 @@
       "type": "stat",
       "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
       "targets": [{
-        "rawSql": "SELECT count() FROM fraud_predictions WHERE fraud_prediction = 1",
-        "format": "table"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT count() FROM fraud_detection.transactions WHERE fraud_prediction = 1",
+        "format": 1
       }],
       "options": { "colorMode": "background", "thresholds": { "steps": [{"color":"green","value":0},{"color":"red","value":1}] } }
     },
@@ -33,8 +35,9 @@
       "type": "stat",
       "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
       "targets": [{
-        "rawSql": "SELECT round(countIf(fraud_prediction=1) / count() * 100, 2) FROM fraud_predictions",
-        "format": "table"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT round(countIf(fraud_prediction=1) / count() * 100, 2) FROM fraud_detection.transactions",
+        "format": 1
       }]
     },
     {
@@ -43,8 +46,9 @@
       "type": "stat",
       "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
       "targets": [{
-        "rawSql": "SELECT round(avg(fraud_probability), 3) FROM fraud_predictions WHERE fraud_prediction = 1",
-        "format": "table"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT round(avg(fraud_probability), 3) FROM fraud_detection.transactions WHERE fraud_prediction = 1",
+        "format": 1
       }]
     },
     {
@@ -53,8 +57,9 @@
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
       "targets": [{
-        "rawSql": "SELECT toStartOfInterval(inserted_at, INTERVAL 30 SECOND) as time, count() as transactions FROM fraud_predictions WHERE $__timeFilter(inserted_at) GROUP BY time ORDER BY time",
-        "format": "time_series"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT toStartOfInterval(inserted_at, INTERVAL 30 SECOND) as time, count() as transactions FROM fraud_detection.transactions WHERE $__timeFilter(inserted_at) GROUP BY time ORDER BY time",
+        "format": 0
       }]
     },
     {
@@ -63,8 +68,9 @@
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
       "targets": [{
-        "rawSql": "SELECT toStartOfInterval(inserted_at, INTERVAL 30 SECOND) as time, count() as frauds FROM fraud_predictions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 GROUP BY time ORDER BY time",
-        "format": "time_series"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT toStartOfInterval(inserted_at, INTERVAL 30 SECOND) as time, count() as frauds FROM fraud_detection.transactions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 GROUP BY time ORDER BY time",
+        "format": 0
       }],
       "fieldConfig": { "defaults": { "color": { "fixedColor": "red", "mode": "fixed" } } }
     },
@@ -74,8 +80,9 @@
       "type": "histogram",
       "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
       "targets": [{
-        "rawSql": "SELECT amt FROM fraud_predictions WHERE $__timeFilter(inserted_at) LIMIT 10000",
-        "format": "table"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT amt FROM fraud_detection.transactions WHERE $__timeFilter(inserted_at) LIMIT 10000",
+        "format": 1
       }]
     },
     {
@@ -84,8 +91,9 @@
       "type": "piechart",
       "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
       "targets": [{
-        "rawSql": "SELECT category, count() as cnt FROM fraud_predictions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 GROUP BY category ORDER BY cnt DESC LIMIT 10",
-        "format": "table"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT category, count() as cnt FROM fraud_detection.transactions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 GROUP BY category ORDER BY cnt DESC LIMIT 10",
+        "format": 1
       }]
     },
     {
@@ -94,8 +102,9 @@
       "type": "table",
       "gridPos": { "x": 0, "y": 20, "w": 24, "h": 10 },
       "targets": [{
-        "rawSql": "SELECT inserted_at, trans_num, first, last, city, state, category, round(amt,2) as amount, round(fraud_probability,3) as score FROM fraud_predictions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 ORDER BY inserted_at DESC LIMIT 50",
-        "format": "table"
+        "datasource": { "type": "grafana-clickhouse-datasource" },
+        "rawSql": "SELECT inserted_at, trans_num, first, last, city, state, category, round(amt,2) as amount, round(fraud_probability,3) as score FROM fraud_detection.transactions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 ORDER BY inserted_at DESC LIMIT 50",
+        "format": 1
       }]
     }
   ]

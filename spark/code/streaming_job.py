@@ -125,6 +125,7 @@ def main():
         .option("kafka.bootstrap.servers", KAFKA_SERVERS) \
         .option("subscribe", KAFKA_TOPIC) \
         .option("startingOffsets", "latest") \
+        .option("failOnDataLoss", "false") \
         .load()
 
     schema_ddl = "idx INT, trans_date_trans_time STRING, cc_num STRING, merchant STRING, category STRING, amt DOUBLE, first STRING, last STRING, gender STRING, street STRING, city STRING, state STRING, zip STRING, lat DOUBLE, " \
