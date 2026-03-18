@@ -1,0 +1,102 @@
+{
+  "title": "Fraud Detection Pipeline",
+  "uid": "fraud-pipeline-001",
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Transactions",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "targets": [{
+        "rawSql": "SELECT count() FROM fraud_predictions",
+        "format": "table"
+      }],
+      "options": { "colorMode": "background" }
+    },
+    {
+      "id": 2,
+      "title": "Detected Frauds",
+      "type": "stat",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "targets": [{
+        "rawSql": "SELECT count() FROM fraud_predictions WHERE fraud_prediction = 1",
+        "format": "table"
+      }],
+      "options": { "colorMode": "background", "thresholds": { "steps": [{"color":"green","value":0},{"color":"red","value":1}] } }
+    },
+    {
+      "id": 3,
+      "title": "Fraud Rate %",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "targets": [{
+        "rawSql": "SELECT round(countIf(fraud_prediction=1) / count() * 100, 2) FROM fraud_predictions",
+        "format": "table"
+      }]
+    },
+    {
+      "id": 4,
+      "title": "Avg Fraud Probability",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "targets": [{
+        "rawSql": "SELECT round(avg(fraud_probability), 3) FROM fraud_predictions WHERE fraud_prediction = 1",
+        "format": "table"
+      }]
+    },
+    {
+      "id": 5,
+      "title": "Transactions Over Time (30s)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [{
+        "rawSql": "SELECT toStartOfInterval(inserted_at, INTERVAL 30 SECOND) as time, count() as transactions FROM fraud_predictions WHERE $__timeFilter(inserted_at) GROUP BY time ORDER BY time",
+        "format": "time_series"
+      }]
+    },
+    {
+      "id": 6,
+      "title": "Frauds Over Time (30s)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [{
+        "rawSql": "SELECT toStartOfInterval(inserted_at, INTERVAL 30 SECOND) as time, count() as frauds FROM fraud_predictions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 GROUP BY time ORDER BY time",
+        "format": "time_series"
+      }],
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "red", "mode": "fixed" } } }
+    },
+    {
+      "id": 7,
+      "title": "Transaction Amount Distribution",
+      "type": "histogram",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [{
+        "rawSql": "SELECT amt FROM fraud_predictions WHERE $__timeFilter(inserted_at) LIMIT 10000",
+        "format": "table"
+      }]
+    },
+    {
+      "id": 8,
+      "title": "Fraud by Category",
+      "type": "piechart",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [{
+        "rawSql": "SELECT category, count() as cnt FROM fraud_predictions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 GROUP BY category ORDER BY cnt DESC LIMIT 10",
+        "format": "table"
+      }]
+    },
+    {
+      "id": 9,
+      "title": "Detected Frauds — Transaction Details",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 20, "w": 24, "h": 10 },
+      "targets": [{
+        "rawSql": "SELECT inserted_at, trans_num, first, last, city, state, category, round(amt,2) as amount, round(fraud_probability,3) as score FROM fraud_predictions WHERE $__timeFilter(inserted_at) AND fraud_prediction = 1 ORDER BY inserted_at DESC LIMIT 50",
+        "format": "table"
+      }]
+    }
+  ]
+}

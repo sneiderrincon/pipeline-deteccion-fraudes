@@ -1,0 +1,158 @@
+services:
+
+  # ─── Override: 3-broker Kafka cluster ─────────────────────────────────────
+  kafka:
+    deploy:
+      replicas: 0   # disable single broker
+
+  kafka1:
+    image: bitnami/kafka:3.7.0
+    container_name: kafka1
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:19092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka1:19092,2@kafka2:19093,3@kafka3:19094
+      KAFKA_KRAFT_CLUSTER_ID: fraud-pipeline-prod-001
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka1_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  kafka2:
+    image: bitnami/kafka:3.7.0
+    container_name: kafka2
+    ports:
+      - "9093:9092"
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_NODE_ID: "2"
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:19093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka1:19092,2@kafka2:19093,3@kafka3:19094
+      KAFKA_KRAFT_CLUSTER_ID: fraud-pipeline-prod-001
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka2_data:/bitnami/kafka
+
+  kafka3:
+    image: bitnami/kafka:3.7.0
+    container_name: kafka3
+    ports:
+      - "9094:9092"
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_NODE_ID: "3"
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:19094
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka1:19092,2@kafka2:19093,3@kafka3:19094
+      KAFKA_KRAFT_CLUSTER_ID: fraud-pipeline-prod-001
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka3_data:/bitnami/kafka
+
+  kafka-init:
+    depends_on:
+      kafka1:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVER: kafka1:9092
+      KAFKA_REPLICATION: "3"
+
+  kafka-ui:
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    environment:
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:9092,kafka2:9092,kafka3:9092
+
+  producer:
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:9092,kafka3:9092
+
+  spark-worker:
+    deploy:
+      replicas: 0  # disable single worker
+
+  spark-worker-1:
+    image: bitnami/spark:3.5
+    container_name: spark-worker-1
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 4G
+      SPARK_WORKER_CORES: 2
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+    depends_on:
+      - spark-master
+    volumes:
+      - ./spark/code:/opt/bitnami/spark/apps
+      - ./model:/opt/bitnami/spark/model
+      - ./spark/jars:/opt/spark/jars
+    command: ["/bin/bash", "/opt/bitnami/spark/apps/run_worker.sh"]
+
+  spark-worker-2:
+    image: bitnami/spark:3.5
+    container_name: spark-worker-2
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 4G
+      SPARK_WORKER_CORES: 2
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+    depends_on:
+      - spark-master
+    volumes:
+      - ./spark/code:/opt/bitnami/spark/apps
+      - ./model:/opt/bitnami/spark/model
+      - ./spark/jars:/opt/spark/jars
+    command: ["/bin/bash", "/opt/bitnami/spark/apps/run_worker.sh"]
+
+  spark-worker-3:
+    image: bitnami/spark:3.5
+    container_name: spark-worker-3
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 4G
+      SPARK_WORKER_CORES: 2
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+    depends_on:
+      - spark-master
+    volumes:
+      - ./spark/code:/opt/bitnami/spark/apps
+      - ./model:/opt/bitnami/spark/model
+      - ./spark/jars:/opt/spark/jars
+    command: ["/bin/bash", "/opt/bitnami/spark/apps/run_worker.sh"]
+
+volumes:
+  kafka1_data:
+  kafka2_data:
+  kafka3_data:
